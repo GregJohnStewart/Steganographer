@@ -13,6 +13,7 @@
 #include <sstream>//string stream
 #include <iostream>//for outputs
 #include <iomanip>//manipulate outputs
+#include <sys/stat.h>//for checking filepaths
 
 using namespace std;
 

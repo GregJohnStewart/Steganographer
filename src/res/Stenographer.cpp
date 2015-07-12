@@ -55,7 +55,7 @@ Stenographer(string stringToHide,string origFilePath,string outputDir){
 tests input/output places to make sure they work
 returns if it failed or not
 */
-bool setup(string stringToHideIn,string origFilePathIn,string outputDirIn){
+bool Stenographer::setup(string stringToHideIn,string origFilePathIn,string outputDirIn){
     bool worked = true;
     setNewStrToHide(stringToHideIn);
     
@@ -71,7 +71,7 @@ bool setup(string stringToHideIn,string origFilePathIn,string outputDirIn){
 //
 //@Param stringIn
 //  the string we are getting in
-void setNewStrToHide(string stringIn){
+void Stenographer::setNewStrToHide(string stringIn){
     //TODO: checks?
     stringToHide = stringIn;
 }//setStrToHide
@@ -79,8 +79,8 @@ void setNewStrToHide(string stringIn){
 /* sets the image to read from
 tests the path for an image file
 */
-bool setInputImage(string inputPath){
-    bool worked = checkFilePath(inputPath);
+bool Stenographer::setInputImage(string inputPath){
+    bool worked = checkFilePath(inputPath,false);
     if(worked){
         origFilePath = inputPath;
     }
@@ -90,8 +90,8 @@ bool setInputImage(string inputPath){
 /* sets the output directory
 tests to make sure it exists
 */
-bool setOutputDir(string outputPath){
-    bool worked = checkFilePath(outputPath);
+bool Stenographer::setOutputDir(string outputPath){
+    bool worked = checkFilePath(outputPath,true);
     if(worked){
         outputDir = outputPath;
     }
@@ -103,39 +103,98 @@ bool setOutputDir(string outputPath){
 */
 
 //gets the input file path
-string getInputPath(){
-    return origFilePath();
+string Stenographer::getInputPath(){
+    return origFilePath;
 }//getInputPath()
 
 //gets the output file path
-string getOutputPath(){
+string Stenographer::getOutputPath(){
     return outputDir;
 }//getOutputPath()
 
 //gets the string that we are hiding
-string getStringToHide(){
+string Stenographer::getStringToHide(){
     return stringToHide;
 }//getStringToHide
 
 //gets what is currently hidden in the input file
-string getInputHiddenMsg(){
+string Stenographer::getInputHiddenMsg(){
     //open input file
     //
     //read in data & build string
     //output
 }//getInputHiddenMsg()
-
-//gets what is currently hidden in the output file (if any)
-string getOutputHiddenMsg();
      
 // returns if the object is ready to go or not
-bool ready();
+bool Stenographer::ready(){
+    bool ready = true;
+    
+    if((stringToHide == "") | (origFilePath == "") | (outputDir == "")){
+        worked = true;
+    }else{
+        worked = false;
+    }
+    
+    return ready;
+}//ready()
 ////////////////////////////////
 ////	Private Methods     ////
 ////////////////////////////////
 
 
 //checks if the filepath given is valid
-bool Stenographer::checkFilepath(string){
-    
+bool Stenographer::checkFilepath(string pathIn, bool dir){
+    bool worked = true;//if things worked
+    struct stat pathStat;//buffer for the stat
+    //check if valid 
+    if(worked = (stat(pathIn.c_str(), &pathStat) == 0)){
+        //check if a file or directory
+        if((pathStat.st_mode & S_IFDIR) & (dir)){
+            worked = true;
+        }else if((pathStat.st_mode & S_IFREG) & (!dir)) ){
+            //check if valid filetype
+            worked = checkFileType(pathIn);
+        }else{
+            worked = false;
+        }
+    }//if valid path    
+    return worked;
 }//checkFilePath(string)
+
+
+bool Stenographer::checkFileType(string pathIn){
+    bool worked = true;
+    //get extension from path and normalize it by making it uppercase
+    string extension = pathIn.substr(pathIn.find_last_of(".") + 1)
+    extension = transform(extension.begin(), extension.end(), extension.begin(), toupper);
+    //check if a valid filetype
+    if(extension == "JPG"){//TODO: add more extensions
+        worked = true;
+    }else{
+        worked = false;
+    }
+    return worked;
+}//checkFileType(string)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
