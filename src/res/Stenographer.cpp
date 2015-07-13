@@ -7,12 +7,7 @@
 
 //includes
 #include "Stenographer.h"//header file for the object
-//all other includes in header file ^
-
-//instance variables listed in Stenographer.h
-
-//usings
-using namespace std;
+//all other includes & usings in header file ^
 
 ////////////////////////////
 ////	Public methods	////
@@ -23,7 +18,7 @@ using namespace std;
 
 //Stenographer()
 //  empty constructor, initializes everything to nulls
-Stenographer(){
+Stenographer::Stenographer(){
     stringToHide = "";
     origFilePath = "";
     outputDir = "";
@@ -38,10 +33,10 @@ Stenographer(){
 //      the filepath to the original image
 //@Param outputDir
 //      the output directory 
-Stenographer(string stringToHide,string origFilePath,string outputDir){
+Stenographer::Stenographer(string stringToHide, string origFilePath, string outputDir){
     bool worked = setup(stringToHide,origFilePath,outputDir);//if things worked
     if(!worked){
-        Stenographer();
+        //Stenographer();
         string output = "Failed to setup data, defaulted to nulls. Check to make sure file paths are valid, and are accessible and to this user's permissions.";
         throw StenographerException(output);
     }
@@ -117,22 +112,25 @@ string Stenographer::getStringToHide(){
     return stringToHide;
 }//getStringToHide
 
-//gets what is currently hidden in the input file
-string Stenographer::getInputHiddenMsg(){
-    //open input file
-    //
-    //read in data & build string
-    //output
-}//getInputHiddenMsg()
+
      
+string Stenographer::toString(){
+    return "Input File: \"" +
+            getInputPath() + 
+            "\" Output Dir: \"" + 
+            getOutputPath() + 
+            "\" String Hiding: \"" + 
+            getStringToHide(); 
+}//toString()
+
 // returns if the object is ready to go or not
 bool Stenographer::ready(){
     bool ready = true;
     
     if((stringToHide == "") | (origFilePath == "") | (outputDir == "")){
-        worked = true;
+        ready = true;
     }else{
-        worked = false;
+        ready = false;
     }
     
     return ready;
@@ -143,7 +141,7 @@ bool Stenographer::ready(){
 
 
 //checks if the filepath given is valid
-bool Stenographer::checkFilepath(string pathIn, bool dir){
+bool Stenographer::checkFilePath(string pathIn, bool dir){
     bool worked = true;//if things worked
     struct stat pathStat;//buffer for the stat
     //check if valid 
@@ -151,7 +149,7 @@ bool Stenographer::checkFilepath(string pathIn, bool dir){
         //check if a file or directory
         if((pathStat.st_mode & S_IFDIR) & (dir)){
             worked = true;
-        }else if((pathStat.st_mode & S_IFREG) & (!dir)) ){
+        }else if((pathStat.st_mode & S_IFREG) & (!dir)){
             //check if valid filetype
             worked = checkFileType(pathIn);
         }else{
@@ -165,8 +163,8 @@ bool Stenographer::checkFilepath(string pathIn, bool dir){
 bool Stenographer::checkFileType(string pathIn){
     bool worked = true;
     //get extension from path and normalize it by making it uppercase
-    string extension = pathIn.substr(pathIn.find_last_of(".") + 1)
-    extension = transform(extension.begin(), extension.end(), extension.begin(), toupper);
+    string extension = pathIn.substr(pathIn.find_last_of(".") + 1);
+    transform(extension.begin(), extension.end(), extension.begin(), ::toupper);
     //check if a valid filetype
     if(extension == "JPG"){//TODO: add more extensions
         worked = true;
@@ -176,6 +174,13 @@ bool Stenographer::checkFileType(string pathIn){
     return worked;
 }//checkFileType(string)
 
+
+//couts a debug message
+void Stenographer::sendDebugMsg(string message){
+    if(debugging){
+        cout << message << endl;
+    }
+}//sendDebugMsg
 
 
 

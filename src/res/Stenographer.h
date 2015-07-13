@@ -10,11 +10,15 @@
 //includes
 #include "StenographerException.h"//exceptions for the object
 
-#include <sstream>//string stream
+#include <string>//for strings
+#include <algorithm>
+//#include <sstream>//string stream
 #include <iostream>//for outputs
 #include <iomanip>//manipulate outputs
 #include <sys/stat.h>//for checking filepaths
 
+//usings
+using std::string;
 using namespace std;
 
 class Stenographer{
@@ -26,15 +30,18 @@ class Stenographer{
 		string stringToHide; // the string we are hiding in the image
         string origFilePath; // the image we are grabbing from
         string outputDir;    // the directory we are putting the finished images in
+        const static bool debugging = true;//if we are debugging (outputs debug messages)
 
         /*
             Private functions
         */
 
         //checks if the filepath given is valid
-        bool checkFilepath(string);
-        
-        
+        bool checkFilePath(string,bool);
+        //checks if the extension of the filepath is valid
+        bool checkFileType(string pathIn);
+        //couts a debug message
+        void sendDebugMsg(string);
 	public:
 		/*
 			Constructors
@@ -80,12 +87,9 @@ class Stenographer{
         
         //gets the string that we are hiding
         string getStringToHide();
-        
-        //gets what is currently hidden in the input file
-        string getInputHiddenMsg();
 
-        //gets what is currently hidden in the output file (if any)
-        string getOutputHiddenMsg();
+        //toString
+        string toString();
         
         // returns if the object is ready to go or not
 		bool ready();
