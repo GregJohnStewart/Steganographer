@@ -13,11 +13,12 @@ using namespace std;
 
 int main(){
     string inputFile = "test_orig.jpg";
-    string outputDir = "outputs/";
+    string outputDir = "/";
     string strToHide = "hello world";
     Stenographer sten;
     
-    sten = Stenographer(strToHide, inputFile, outputDir);
+    sten = Stenographer();
+    
     sten.setup(inputFile, outputDir, strToHide);
     
     cout << sten.toString();

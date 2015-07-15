@@ -50,7 +50,7 @@ class Stenographer{
 		Stenographer();
         
         //sets up the object using the setup() functionws
-        Stenographer(string,string,string);//stringToHide,origFilePath,outputDir
+        Stenographer(string,string,string);//origFilePath,outputDir, stringToHide
 	    
 		/*
 			Setters
@@ -60,7 +60,7 @@ class Stenographer{
             tests input/output places to make sure they work
             returns if it failed or not
         */
-        bool setup(string,string,string);
+        bool setup(string,string,string);//origFilePath,outputDir, stringToHide
         
 		// sets the new string to hide	
 		void setNewStrToHide(string);

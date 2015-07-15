@@ -33,8 +33,8 @@ Stenographer::Stenographer(){
 //      the filepath to the original image
 //@Param outputDir
 //      the output directory 
-Stenographer::Stenographer(string stringToHide, string origFilePath, string outputDir){
-    bool worked = setup(stringToHide,origFilePath,outputDir);//if things worked
+Stenographer::Stenographer(string origFilePath, string outputDir, string stringToHide){
+    bool worked = setup(origFilePath, outputDir, stringToHide);//if things worked
     if(!worked){
         //Stenographer();
         string output = "Failed to setup data, defaulted to nulls. Check to make sure file paths are valid, and are accessible and to this user's permissions.";
@@ -50,14 +50,15 @@ Stenographer::Stenographer(string stringToHide, string origFilePath, string outp
 tests input/output places to make sure they work
 returns if it failed or not
 */
-bool Stenographer::setup(string stringToHideIn,string origFilePathIn,string outputDirIn){
+bool Stenographer::setup(string origFilePathIn,string outputDirIn, string stringToHideIn){
     bool worked = true;
     setNewStrToHide(stringToHideIn);
     
     worked = setInputImage(origFilePathIn);
     if(worked){
-        worked = setInputImage(outputDirIn);
+        worked = setOutputDir(outputDirIn);
     }
+    
     return worked;
 }//setup(string,string,string)
 
@@ -78,6 +79,8 @@ bool Stenographer::setInputImage(string inputPath){
     bool worked = checkFilePath(inputPath,false);
     if(worked){
         origFilePath = inputPath;
+    }else{
+        throw StenographerException("Failed setting the input image. Make sure the file path is correct and a corect filetype.");
     }
     return worked;
 }//setInputImage(string)
@@ -89,6 +92,8 @@ bool Stenographer::setOutputDir(string outputPath){
     bool worked = checkFilePath(outputPath,true);
     if(worked){
         outputDir = outputPath;
+    }else{
+        throw StenographerException("Failed setting the output directory. Make sure the file path is correct.");
     }
     return worked;
 }//setOutputDir(string)
@@ -119,15 +124,16 @@ string Stenographer::toString(){
             getInputPath() + 
             "\" Output Dir: \"" + 
             getOutputPath() + 
-            "\" String Hiding: \"" + 
-            getStringToHide(); 
+            "\" String Hidingew: \"" + 
+            getStringToHide() +
+            "\"\n"; 
 }//toString()
 
 // returns if the object is ready to go or not
 bool Stenographer::ready(){
     bool ready = true;
     
-    if((stringToHide == "") | (origFilePath == "") | (outputDir == "")){
+    if((stringToHide == "") || (origFilePath == "") || (outputDir == "")){
         ready = true;
     }else{
         ready = false;
@@ -142,20 +148,34 @@ bool Stenographer::ready(){
 
 //checks if the filepath given is valid
 bool Stenographer::checkFilePath(string pathIn, bool dir){
-    bool worked = true;//if things worked
+    sendDebugMsg("Path Given: " + pathIn);
+    bool worked = false;//if things worked
     struct stat pathStat;//buffer for the stat
     //check if valid 
-    if(worked = (stat(pathIn.c_str(), &pathStat) == 0)){
+    if(worked = (lstat(pathIn.c_str(), &pathStat) == 0)){
+        sendDebugMsg("path is present");
         //check if a file or directory
-        if((pathStat.st_mode & S_IFDIR) & (dir)){
+        if((S_ISDIR(pathStat.st_mode)) && dir){
+            sendDebugMsg("path is dir");
             worked = true;
-        }else if((pathStat.st_mode & S_IFREG) & (!dir)){
+        }else if((pathStat.st_mode && S_IFREG) && !dir){
+            sendDebugMsg("path is file");
             //check if valid filetype
             worked = checkFileType(pathIn);
         }else{
+            sendDebugMsg("path is not recognized");
             worked = false;
         }
-    }//if valid path    
+    }else{//if valid path
+        sendDebugMsg("path is invalid");
+        worked = false;
+    }
+    if(debugging & !worked){
+        sendDebugMsg("checking file path \"" + pathIn + "\" failed.");
+    }else if(debugging){
+        sendDebugMsg("path given is valid");
+    }
+    
     return worked;
 }//checkFilePath(string)
 
@@ -170,6 +190,9 @@ bool Stenographer::checkFileType(string pathIn){
         worked = true;
     }else{
         worked = false;
+    }
+    if(debugging & !worked){
+        sendDebugMsg("checking file type \"" + extension + "\" failed.");
     }
     return worked;
 }//checkFileType(string)
