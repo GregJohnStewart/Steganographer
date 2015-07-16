@@ -117,14 +117,17 @@ string Stenographer::getStringToHide(){
     return stringToHide;
 }//getStringToHide
 
-
+//gets the string hidden in the input file
+string getHiddenMessage(){
+    
+}//getHiddenMessage()
      
 string Stenographer::toString(){
     return "Input File: \"" +
             getInputPath() + 
             "\" Output Dir: \"" + 
             getOutputPath() + 
-            "\" String Hidingew: \"" + 
+            "\" String Hiding: \"" + 
             getStringToHide() +
             "\"\n"; 
 }//toString()
@@ -133,7 +136,7 @@ string Stenographer::toString(){
 bool Stenographer::ready(){
     bool ready = true;
     
-    if((stringToHide == "") || (origFilePath == "") || (outputDir == "")){
+    if(gotInputPath() && gotOutputPath() && gotStringToHide()){
         ready = true;
     }else{
         ready = false;
@@ -141,6 +144,36 @@ bool Stenographer::ready(){
     
     return ready;
 }//ready()
+
+
+//returns if got an input
+bool Stenographer::gotInputPath(){
+    if(origFilePath == ""){
+        return false;
+    }else{
+        return true;
+    }
+}//gotInputPath()
+
+//returns if got an output path
+bool Stenographer::gotOutputPath(){
+    if(outputDir == ""){
+        return false;
+    }else{
+        return true;
+    }
+}//gotOutputPath()
+
+//returns if got a string to hide
+bool Stenographer::gotStringToHide(){
+    if(stringToHide == ""){
+        return false;
+    }else{
+        return true;
+    }
+}//gotStringToHide()
+
+
 ////////////////////////////////
 ////	Private Methods     ////
 ////////////////////////////////
@@ -148,33 +181,35 @@ bool Stenographer::ready(){
 
 //checks if the filepath given is valid
 bool Stenographer::checkFilePath(string pathIn, bool dir){
-    sendDebugMsg("Path Given: " + pathIn);
+    //sendDebugMsg("Path Given: " + pathIn);
     bool worked = false;//if things worked
     struct stat pathStat;//buffer for the stat
     //check if valid 
     if(worked = (lstat(pathIn.c_str(), &pathStat) == 0)){
-        sendDebugMsg("path is present");
+        //sendDebugMsg("path is present");
         //check if a file or directory
         if((S_ISDIR(pathStat.st_mode)) && dir){
-            sendDebugMsg("path is dir");
+            //sendDebugMsg("path is dir");
             worked = true;
         }else if((pathStat.st_mode && S_IFREG) && !dir){
-            sendDebugMsg("path is file");
+            //sendDebugMsg("path is file");
             //check if valid filetype
             worked = checkFileType(pathIn);
         }else{
-            sendDebugMsg("path is not recognized");
+            //sendDebugMsg("path is not recognized");
             worked = false;
         }
     }else{//if valid path
-        sendDebugMsg("path is invalid");
+        //sendDebugMsg("path is invalid");
         worked = false;
     }
+    /*
     if(debugging & !worked){
         sendDebugMsg("checking file path \"" + pathIn + "\" failed.");
     }else if(debugging){
         sendDebugMsg("path given is valid");
     }
+    */
     
     return worked;
 }//checkFilePath(string)
@@ -206,6 +241,22 @@ void Stenographer::sendDebugMsg(string message){
 }//sendDebugMsg
 
 
+
+
+
+////////////////////////////////////////////////
+////    File In/Out, stenography classes    ////
+////////////////////////////////////////////////
+
+//does the stenography
+bool Stenographer::doStenography(){
+    
+}//doStenography
+
+//gets the optional output file
+string Stenographer::getHiddenMessage(){
+    
+}
 
 
 

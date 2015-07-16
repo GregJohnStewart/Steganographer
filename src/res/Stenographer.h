@@ -30,6 +30,7 @@ class Stenographer{
 		string stringToHide; // the string we are hiding in the image
         string origFilePath; // the image we are grabbing from
         string outputDir;    // the directory we are putting the finished images in
+        String outputFile;   // the name of the file to output to (optional).
         const static bool debugging = true;//if we are debugging (outputs debug messages)
 
         /*
@@ -42,6 +43,11 @@ class Stenographer{
         bool checkFileType(string pathIn);
         //couts a debug message
         void sendDebugMsg(string);
+
+        //
+        //functions to do the stenography
+        //
+        
 	public:
 		/*
 			Constructors
@@ -88,11 +94,26 @@ class Stenographer{
         //gets the string that we are hiding
         string getStringToHide();
 
+        //gets the optional output file
+        string getHiddenMessage();
+
         //toString
         string toString();
         
         // returns if the object is ready to go or not
 		bool ready();
+
+        //returns if got an input
+        bool gotInputPath();
+
+        //returns if got an output path
+        bool gotOutputPath();
+
+        //returns if got a string to hide
+        bool gotStringToHide();
+
+        //does the stenography
+        bool doStenography();
 	
 };//class Stenographer
 #endif

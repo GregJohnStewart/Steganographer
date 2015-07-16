@@ -13,7 +13,7 @@ using namespace std;
 
 int main(){
     string inputFile = "test_orig.jpg";
-    string outputDir = "/";
+    string outputDir = "outputs";
     string strToHide = "hello world";
     Stenographer sten;
     
@@ -22,4 +22,12 @@ int main(){
     sten.setup(inputFile, outputDir, strToHide);
     
     cout << sten.toString();
+
+    if(sten.ready()){
+        cout << "object is ready" << endl;
+    }else{
+        cout << "object is not ready" << endl;
+    }
+
+    
 }//main()
