@@ -98,6 +98,14 @@ bool Stenographer::setOutputDir(string outputPath){
     return worked;
 }//setOutputDir(string)
 
+
+/* sets the output filename.
+    NOTE: do not give it a file extension
+*/
+void setOutputName(string){
+    
+}//setOutputName()
+
 /*
     Getters
 */
@@ -108,40 +116,77 @@ string Stenographer::getInputPath(){
 }//getInputPath()
 
 //gets the output file path
-string Stenographer::getOutputPath(){
+string Stenographer::getOutputDir(){
     return outputDir;
 }//getOutputPath()
+
+string Stenographer::getOutputPath(){
+    
+    string outputFilePath = getOutputDir();
+    //grab filename from outputFileName (cutting away rest of path & extension if there)
+    
+    //add output file path
+    if((outputFilePath.find("/") + 1) != outputFilePath.length()){
+        outputFilePath += "/"; 
+    }
+
+    outputFilePath += getOutputFileName();
+    
+    return outputFilePath;
+}//getOutputPath()
+
+//gets the optional output filename
+string Stenographer::getOutputFileName(){
+    string output = "";
+    
+    if(outputFileName == ""){
+        //get name from input
+        string inputFile = getInputPath();
+        if(inputFile.find("/") == string::npos){
+            output = inputFile;
+        }else{
+            output = inputFile.substr(inputFile.find_last_of("/") + 1);
+        }
+        
+        if(inputFile.find(".") != string::npos){
+            int posOfDot = output.find_last_of(".");
+            output = output.substr(0,posOfDot);
+        }
+    }else{
+        output = outputFileName;
+    }
+    //tack extension on
+    output += "." + curExtension;
+    //sendDebugMsg("output of getOutputFileName: " + output);
+    return output;
+}//getOutputFileName()
 
 //gets the string that we are hiding
 string Stenographer::getStringToHide(){
     return stringToHide;
 }//getStringToHide
 
-//gets the string hidden in the input file
-string getHiddenMessage(){
-    
-}//getHiddenMessage()
-     
 string Stenographer::toString(){
     return "Input File: \"" +
             getInputPath() + 
             "\" Output Dir: \"" + 
-            getOutputPath() + 
+            getOutputDir() + 
             "\" String Hiding: \"" + 
             getStringToHide() +
-            "\"\n"; 
+            "\" Output File: \"" + 
+            getOutputPath() +
+            "\"\n";
 }//toString()
 
 // returns if the object is ready to go or not
 bool Stenographer::ready(){
     bool ready = true;
     
-    if(gotInputPath() && gotOutputPath() && gotStringToHide()){
+    if(gotInputPath() && gotOutputDir() && gotStringToHide()){
         ready = true;
     }else{
         ready = false;
     }
-    
     return ready;
 }//ready()
 
@@ -156,7 +201,7 @@ bool Stenographer::gotInputPath(){
 }//gotInputPath()
 
 //returns if got an output path
-bool Stenographer::gotOutputPath(){
+bool Stenographer::gotOutputDir(){
     if(outputDir == ""){
         return false;
     }else{
@@ -219,9 +264,10 @@ bool Stenographer::checkFileType(string pathIn){
     bool worked = true;
     //get extension from path and normalize it by making it uppercase
     string extension = pathIn.substr(pathIn.find_last_of(".") + 1);
-    transform(extension.begin(), extension.end(), extension.begin(), ::toupper);
+    transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     //check if a valid filetype
-    if(extension == "JPG"){//TODO: add more extensions
+    if(isValidExtension(extension)){//TODO: add more extensions
+        curExtension = extension;
         worked = true;
     }else{
         worked = false;
@@ -232,6 +278,17 @@ bool Stenographer::checkFileType(string pathIn){
     return worked;
 }//checkFileType(string)
 
+bool Stenographer::isValidExtension(string extensionIn){
+    if(extensionIn == "jpg" || 
+       extensionIn == "bmp" ||
+       extensionIn == "gif" ||
+       extensionIn == "png"
+      ){
+        return true;
+    }else{
+        return false;
+    }
+}//isValidExtension()
 
 //couts a debug message
 void Stenographer::sendDebugMsg(string message){
@@ -249,22 +306,174 @@ void Stenographer::sendDebugMsg(string message){
 ////////////////////////////////////////////////
 
 //does the stenography
+
+/**
+ * Does the stenography by:
+ *
+ * 1) pulling the data into an input queue
+ *
+ * 2) hide the stringToHide in the data, moving thr data from the input queue to the output queue
+ *      - skip over the header, just move it over
+ * 
+ * 3) move the stuff to the new file
+ *      - 
+ */
 bool Stenographer::doStenography(){
-    
+    // make sure we are ready to go
+    bool worked = ready();
+    unsigned short int headerSize; 
+
+    try{
+        headerSize = getHeaderSize();
+        sendDebugMsg("Size of header: " + headerSize);
+    }catch(StenographerException e){
+        sendDebugMsg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        sendDebugMsg(e.what());
+        worked = false;
+    }
+    sendDebugMsg("begin the operation \n");
+    if(worked){
+        queue<unsigned char> inputQ;
+        queue<unsigned char> outputQ;
+        
+        //sendDebugMsg("Size of inputQ: " + inputQ.size());
+        //sendDebugMsg("Size of outputQ: " + outputQ.size());
+        //unsigned char* header;
+
+        if(worked = getImageData(&inputQ) && !inputQ.empty()){
+            sendDebugMsg("finished getting input data");
+            sendDebugMsg("Size of inputQ: ");// + inputQ.size());
+            if(worked = processImageData(&inputQ, &outputQ, headerSize) && !outputQ.empty()){
+                sendDebugMsg("finished processing data");
+                sendDebugMsg("Size of OutputQ: ");// + outputQ.size());
+                worked = putImageData(&outputQ);
+                sendDebugMsg("finished outputting data");
+            }//if processed image data
+        }//if got image data
+    }//if the ready function worked
+    return worked;
 }//doStenography
 
 //gets the optional output file
 string Stenographer::getHiddenMessage(){
+    bool worked = ready();
+    string outputStr = "message from file";
     
-}
+    //TODO: do the thing
+    
+    if(worked){
+        return outputStr;
+    }else{
+        return "";
+    }
+}//getHiddenMessage()
 
+//function to get data from image
+bool Stenographer::getImageData(queue<unsigned char> *inputQ){
+    bool worked = true;
+    
+    fstream inputFileStream;
+    inputFileStream.open(origFilePath.c_str(), ios::in|ios::binary);
+    
+    if(!inputFileStream){
+        worked = false;
+    }else{
+        inputFileStream.seekg(0, ios::beg);
+        char tempByte;
+        while(!inputFileStream.eof()){
+            //inputQ->push(inputFileStream.read(tempByte, 1));
+            inputFileStream.read(&tempByte, sizeof tempByte);
+            inputQ->push(tempByte);
+            //sendDebugMsg("getting another bit of info");
+        }
+    }
+    inputFileStream.close();
+    
+    return worked;
+}//getImageData()
 
+//function to process the data in the que
+bool Stenographer::processImageData(queue<unsigned char> *inputQ, queue<unsigned char> *outputQ, unsigned short int headerSize){
+    sendDebugMsg("Begin processing image data");
+    bool worked = true;
+    unsigned char curByte;
+    //move header over
+    for(unsigned short int i = 1; i <= headerSize && !inputQ->empty(); i++){
+        outputQ->push(inputQ->front());
+        inputQ->pop();
+        //sendDebugMsg("moving a byte of the header");
+    }
+    
+    while(!inputQ->empty()){
+        
+        //sendDebugMsg("processing another byte");
+        curByte = inputQ->front();
+        inputQ->pop();
+        
+        //TODO: process this byte
+        
+        outputQ->push(curByte);
+        
+        //sendDebugMsg("\t...Done");
+    }    
+    return worked;
+}//processImageData()
 
+//function to put the data into the new file
+bool Stenographer::putImageData(queue<unsigned char> *outputQ){
+    bool worked = true;
+    //determine new filename
+    string outputFilePath = getOutputPath();
+    sendDebugMsg("output file path: " + outputFilePath + "\n");    
+    //open new file @ outputFilePath
+    fstream outputFileStream;
+    outputFileStream.open(outputFilePath.c_str(), fstream::out|fstream::binary|fstream::trunc);
+    
+    if(!outputFileStream){
+        worked = false;
+    }else{
+        sendDebugMsg("setup output file");  
+        outputFileStream.seekg(0, ios::beg);
+        
+        sendDebugMsg("putting info into file: ");
+        unsigned char tempByte;
+        do{
+        
+            //outputFileStream << outputQ->front();
+            
+            //sendDebugMsg("putting ");
+            //outputFileStream.write((const char) tempByte , sizeof(const char));
+            //outputFileStream.write(reinterpret_cast<const char*>(tempByte), sizeof(const char));
 
+            //tempByte = outputQ->front();
+            //outputFileStream.put(tempByte);
+            outputFileStream.put(outputQ->front());
+            //sendDebugMsg("info");
+            outputQ->pop();
+            //sendDebugMsg("");
+        }while(!outputQ->empty());
+    }
+    outputFileStream.close();
+    
+    return worked;
+}//putImageData()
 
-
-
-
+//function to get the header size in number of bytes
+unsigned short int Stenographer::getHeaderSize(){
+    //based on: http://stackoverflow.com/questions/10423942/what-is-the-header-size-of-png-jpg-jpeg-bmp-gif-and-other-common-graphics-for
+    
+    sendDebugMsg("getHeaderSize() - extension: " + curExtension);
+    if(curExtension == "jpg"){
+        //TODO: do more to be more accurate. see source above
+        return 2;
+    }else if(curExtension == "bmp" || curExtension == "gif"){
+        return 14;
+    }else if(curExtension == "png"){
+        return 8;
+    }else{
+        throw StenographerException("Failed determining image header file size. Invalid extension given.");
+    }
+}//get HeaderSize
 
 
 

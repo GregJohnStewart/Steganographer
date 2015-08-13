@@ -10,12 +10,15 @@
 //includes
 #include "StenographerException.h"//exceptions for the object
 
-#include <string>//for strings
-#include <algorithm>
-//#include <sstream>//string stream
-#include <iostream>//for outputs
-#include <iomanip>//manipulate outputs
+#include <stdlib.h>  //for calloc() calloc, exit, free
+#include <string>    //for strings
+#include <algorithm> //for checking file extentions
+//#include <sstream> //string stream
+#include <iostream>  //for outputs
+#include <iomanip>   //manipulate outputs
 #include <sys/stat.h>//for checking filepaths
+#include <queue>     //for qeueing the data
+#include <fstream>  //for file io
 
 //usings
 using std::string;
@@ -30,7 +33,8 @@ class Stenographer{
 		string stringToHide; // the string we are hiding in the image
         string origFilePath; // the image we are grabbing from
         string outputDir;    // the directory we are putting the finished images in
-        String outputFile;   // the name of the file to output to (optional).
+        string curExtension; // the current file extension of the input file
+        string outputFileName;   // the name of the file to output to (optional), without extension.
         const static bool debugging = true;//if we are debugging (outputs debug messages)
 
         /*
@@ -40,7 +44,9 @@ class Stenographer{
         //checks if the filepath given is valid
         bool checkFilePath(string,bool);
         //checks if the extension of the filepath is valid
-        bool checkFileType(string pathIn);
+        bool checkFileType(string);
+        //check if valid extension
+        bool isValidExtension(string);
         //couts a debug message
         void sendDebugMsg(string);
 
@@ -48,6 +54,27 @@ class Stenographer{
         //functions to do the stenography
         //
         
+        //function to get data from image
+        bool getImageData(queue<unsigned char>*);
+
+        //function to process the data in the que
+        bool processImageData(queue<unsigned char>*, queue<unsigned char>*, unsigned short int);
+
+        //function to put the data into the new file
+        bool putImageData(queue<unsigned char>*);
+        
+        //function to get the header size
+        unsigned short int getHeaderSize();
+        
+        //function to generate a new image filename
+        string getOutputFilePath();
+        
+        //function to grab a filename from a path w/o exception
+        string getOutputFileName(string);
+
+        //gets the current file extension
+        //string getFileExtension();
+
 	public:
 		/*
 			Constructors
@@ -80,6 +107,11 @@ class Stenographer{
             tests to make sure it exists
         */
         bool setOutputDir(string);
+
+        /* sets the output filename.
+            NOTE: do not give it a file extension
+        */
+        void setOutputName(string);
 		
 		/*
 			Getters
@@ -88,15 +120,21 @@ class Stenographer{
         //gets the input file path
         string getInputPath();
 
-        //gets the output file path
+        //gets the output file directory
+        string getOutputDir();
+
+        //gets the output file directory
         string getOutputPath();
+
+        //gets the output file name
+        string getOutputFileName();
         
         //gets the string that we are hiding
         string getStringToHide();
 
         //gets the optional output file
         string getHiddenMessage();
-
+        
         //toString
         string toString();
         
@@ -107,7 +145,7 @@ class Stenographer{
         bool gotInputPath();
 
         //returns if got an output path
-        bool gotOutputPath();
+        bool gotOutputDir();
 
         //returns if got a string to hide
         bool gotStringToHide();

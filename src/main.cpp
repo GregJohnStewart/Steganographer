@@ -12,7 +12,7 @@ using std::string;
 using namespace std;
 
 int main(){
-    string inputFile = "test_orig.jpg";
+    string inputFile = "test_orig2.bmp";
     string outputDir = "outputs";
     string strToHide = "hello world";
     Stenographer sten;
@@ -25,9 +25,16 @@ int main(){
 
     if(sten.ready()){
         cout << "object is ready" << endl;
+        bool worked = sten.doStenography();
+        if(worked){
+            cout << "stenography worked" << endl;
+        }else{
+            cout << "stenography failed" << endl;
+        }
     }else{
         cout << "object is not ready" << endl;
     }
-
+    
+    
     
 }//main()
