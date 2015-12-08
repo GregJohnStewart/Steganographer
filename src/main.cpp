@@ -14,7 +14,7 @@ using namespace std;
 int main(){
     string inputFile = "test_orig2.bmp";
     string outputDir = "outputs";
-    string strToHide = "hello world";
+    string strToHide = "hello there, world. aaaaaaaaaaabbbbbbbbbcccccccddddddddeeeeeeffffffffgggggggggggggggggghhhhhhhhiiiiiiigggggggggggjjjjjjjjjkkkkkkkklllllllmmmmmmmmnnnnnnnnnooooooooppppppppppppp!%##$^(&_+)(^$##@}{@#13";
     Stenographer sten;
     
     sten = Stenographer();
@@ -31,6 +31,8 @@ int main(){
         }else{
             cout << "stenography failed" << endl;
         }
+        
+        cout << "Hidden message from file: \"" << sten.getHiddenMessage() << "\"" << endl;
     }else{
         cout << "object is not ready" << endl;
     }

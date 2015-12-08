@@ -321,45 +321,74 @@ void Stenographer::sendDebugMsg(string message){
 bool Stenographer::doStenography(){
     // make sure we are ready to go
     bool worked = ready();
-    unsigned short int headerSize; 
-
-    try{
-        headerSize = getHeaderSize();
-        sendDebugMsg("Size of header: " + headerSize);
-    }catch(StenographerException e){
-        sendDebugMsg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-        sendDebugMsg(e.what());
-        worked = false;
-    }
-    sendDebugMsg("begin the operation \n");
+    
+    
     if(worked){
-        queue<unsigned char> inputQ;
-        queue<unsigned char> outputQ;
+        ByteCImg image(getInputPath().c_str());
+        image &= 0xfe;
+        string tempStringToHide = getStringToHide() + (char)EOF;
         
-        //sendDebugMsg("Size of inputQ: " + inputQ.size());
-        //sendDebugMsg("Size of outputQ: " + outputQ.size());
-        //unsigned char* header;
-
-        if(worked = getImageData(&inputQ) && !inputQ.empty()){
-            sendDebugMsg("finished getting input data");
-            sendDebugMsg("Size of inputQ: ");// + inputQ.size());
-            if(worked = processImageData(&inputQ, &outputQ, headerSize) && !outputQ.empty()){
-                sendDebugMsg("finished processing data");
-                sendDebugMsg("Size of OutputQ: ");// + outputQ.size());
-                worked = putImageData(&outputQ);
-                sendDebugMsg("finished outputting data");
-            }//if processed image data
-        }//if got image data
-    }//if the ready function worked
+        ByteCImg::iterator it = image.begin();
+        int i = 0;
+        for (;;) {
+            if (i == tempStringToHide.length()) {
+                break;
+            }
+            char cur = tempStringToHide[i];
+            
+            for (int b = 0; b < 8; ++b) {
+                if (it == image.end()) {
+                    break;
+                }
+                *it = *it | ((cur >> b) & 0x01);
+                ++it;
+            }
+            i++;
+        }
+           
+        if (it == image.end()) {
+            cerr << "Cannot fit the entire input in the image" << endl;
+        }
+        
+        image.save(getOutputPath().c_str());
+    }//if obj ready
+    
     return worked;
 }//doStenography
 
 //gets the optional output file
 string Stenographer::getHiddenMessage(){
     bool worked = ready();
-    string outputStr = "message from file";
+    string outputStr = "";
     
-    //TODO: do the thing
+    if(worked){
+        ByteCImg image(getOutputPath().c_str());
+    
+        char * buffer = (char*) malloc(sizeof(char) * image.size());
+        int bufferpos = 0;
+      
+        int bit = 0;
+        char chr = 0;
+        for (ByteCImg::iterator it = image.begin(); it != image.end(); ++bit, ++it) {
+            chr |= (*it & 0x01) << bit;
+            if (bit == 7) {
+                buffer[bufferpos++] = chr;
+                bit = -1;
+                chr = 0;
+            }
+        }
+        
+        //cout << "bufferpos b4: " << (int) bufferpos << endl << "EOF: " << EOF;
+        
+        for (; buffer[bufferpos] != EOF; --bufferpos);
+        
+        //cout << "bufferpos af: " << (int) bufferpos << endl;
+        
+        for (int i = 0; i < bufferpos; ++i) {
+            //cout << "\tBuffer: " << (int)buffer[i] << endl;
+            outputStr += (int) buffer[i];
+        }
+    }
     
     if(worked){
         return outputStr;
@@ -455,15 +484,15 @@ bool Stenographer::putImageData(queue<unsigned char> *outputQ){
 //function to get the header size in number of bytes
 unsigned short int Stenographer::getHeaderSize(){
     //based on: http://stackoverflow.com/questions/10423942/what-is-the-header-size-of-png-jpg-jpeg-bmp-gif-and-other-common-graphics-for
-    
+    unsigned short int multiplier = 3;
     sendDebugMsg("getHeaderSize() - extension: " + curExtension);
     if(curExtension == "jpg"){
         //TODO: do more to be more accurate. see source above
-        return 2;
+        return 2 * multiplier;
     }else if(curExtension == "bmp" || curExtension == "gif"){
-        return 14;
+        return 14 * multiplier;
     }else if(curExtension == "png"){
-        return 8;
+        return 8 * multiplier;
     }else{
         throw StenographerException("Failed determining image header file size. Invalid extension given.");
     }
@@ -500,18 +529,18 @@ bool Stenographer::putCharInImgData(queue<unsigned char> *inputQ, queue<unsigned
         tempInBit = curData & 1;
         //cout<<tempBit<<endl;//debugging
         
-        cout<<"curData defore: "<< (int)curData;
+        //cout<<"curData defore: "<< (int)curData;
         
         if(tempBit){
-            if(!tempInBit){
+            if(!tempInBit){ 
                 curData++;
             }
         }else{
             if(tempInBit){
-                curData++;
+                curData--;
             }
         }
-        cout << " curData after: " << (int)curData << endl;
+        //cout << " curData after: " << (int)curData << endl;
         outputQ->push(curData);
         
         if(inputQ->empty()){

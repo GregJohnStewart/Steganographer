@@ -10,6 +10,7 @@
 //includes
 #include "StenographerException.h"//exceptions for the object
 
+#include <cstdio>
 #include <stdlib.h>  //for calloc() calloc, exit, free
 #include <string>    //for strings
 #include <algorithm> //for checking file extentions
@@ -21,10 +22,14 @@
 #include <cstddef>   //for size_t
 #include <fstream>   //for file io
 #include <cmath>     //for pow() for bit locations
+#include "CImg.h"    //for working with the images
 
 //usings
 using std::string;
 using namespace std;
+using namespace cimg_library;
+
+typedef CImg<unsigned char> ByteCImg;
 
 class Stenographer{
 	/*
@@ -38,6 +43,8 @@ class Stenographer{
         string curExtension; // the current file extension of the input file
         string outputFileName;   // the name of the file to output to (optional), without extension.
         const static bool debugging = true;//if we are debugging (outputs debug messages)
+        
+        //TODO:: make a new path, the file to get a string from, default to output string
 
         /*
             Private functions
