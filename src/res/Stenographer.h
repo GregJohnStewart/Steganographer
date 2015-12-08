@@ -18,7 +18,9 @@
 #include <iomanip>   //manipulate outputs
 #include <sys/stat.h>//for checking filepaths
 #include <queue>     //for qeueing the data
-#include <fstream>  //for file io
+#include <cstddef>   //for size_t
+#include <fstream>   //for file io
+#include <cmath>     //for pow() for bit locations
 
 //usings
 using std::string;
@@ -74,7 +76,13 @@ class Stenographer{
 
         //gets the current file extension
         //string getFileExtension();
-
+        
+        // gets a character from the image data
+        char getCharDataFromImgData(queue<unsigned char>*);
+        
+        // puts a character into the queue data
+        bool putCharInImgData(queue<unsigned char>*, queue<unsigned char>*, unsigned char);
+        
 	public:
 		/*
 			Constructors

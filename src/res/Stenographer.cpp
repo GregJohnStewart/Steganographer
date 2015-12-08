@@ -404,18 +404,21 @@ bool Stenographer::processImageData(queue<unsigned char> *inputQ, queue<unsigned
         //sendDebugMsg("moving a byte of the header");
     }
     
+    //process string
+    bool processWorked = true;
+    for(int i = 0;i < stringToHide.length() && !inputQ->empty();i++){
+        processWorked = putCharInImgData(inputQ, outputQ, stringToHide.at(i));
+        if(!processWorked){
+            throw StenographerException("Failed processing image data. Failed putting char data into image data.");
+        }
+    }
+
+    //dump rest over
     while(!inputQ->empty()){
-        
-        //sendDebugMsg("processing another byte");
         curByte = inputQ->front();
         inputQ->pop();
-        
-        //TODO: process this byte
-        
         outputQ->push(curByte);
-        
-        //sendDebugMsg("\t...Done");
-    }    
+    }
     return worked;
 }//processImageData()
 
@@ -436,17 +439,8 @@ bool Stenographer::putImageData(queue<unsigned char> *outputQ){
         outputFileStream.seekg(0, ios::beg);
         
         sendDebugMsg("putting info into file: ");
-        unsigned char tempByte;
-        do{
         
-            //outputFileStream << outputQ->front();
-            
-            //sendDebugMsg("putting ");
-            //outputFileStream.write((const char) tempByte , sizeof(const char));
-            //outputFileStream.write(reinterpret_cast<const char*>(tempByte), sizeof(const char));
-
-            //tempByte = outputQ->front();
-            //outputFileStream.put(tempByte);
+        do{
             outputFileStream.put(outputQ->front());
             //sendDebugMsg("info");
             outputQ->pop();
@@ -475,14 +469,58 @@ unsigned short int Stenographer::getHeaderSize(){
     }
 }//get HeaderSize
 
+// gets a character from the image data
+char Stenographer::getCharDataFromImgData(queue<unsigned char> *inputQ){
+    unsigned char charBuilding = 0;
+    
+    return charBuilding;
+}// getCharDataFromImgData(queue<unsigned char>*)
+        
+// puts a character into the queue data
+bool Stenographer::putCharInImgData(queue<unsigned char> *inputQ, queue<unsigned char> *outputQ, unsigned char inputChar){
+    bool worked = true;
+    bool finished = false;
+    //cout<<"Current Char: " << inputChar << endl;
+    //cout<<"sizeof unsigned Char: " << sizeof(inputChar) << endl;
+    unsigned char curData;
+    unsigned short int tempBitLoc = 0;
+    bool tempBit = 0;
+    bool tempInBit = 0;
+    unsigned short int bitSize = sizeof(unsigned char) * 8;
+    //cout<<"bitSize: " << bitSize << endl;                 
+    for(int i = 0;(i < bitSize) && !inputQ->empty();i++){
+        //update temp bit to the one we are on
+        tempBitLoc = pow(2,i);
 
-
-
-
-
-
-
-
-
-
-
+        curData = inputQ->front();
+        inputQ->pop();
+        
+        //move data through
+        tempBit = inputChar & tempBitLoc;
+        tempInBit = curData & 1;
+        //cout<<tempBit<<endl;//debugging
+        
+        cout<<"curData defore: "<< (int)curData;
+        
+        if(tempBit){
+            if(!tempInBit){
+                curData++;
+            }
+        }else{
+            if(tempInBit){
+                curData++;
+            }
+        }
+        cout << " curData after: " << (int)curData << endl;
+        outputQ->push(curData);
+        
+        if(inputQ->empty()){
+            finished = true;
+        }
+    }    
+    if(finished){
+        worked = false;
+    }
+    
+    return worked;
+}// putCharInImgData(queue<unsigned char>*, unsigned char)
