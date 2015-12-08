@@ -279,6 +279,7 @@ bool Stenographer::checkFileType(string pathIn){
 }//checkFileType(string)
 
 bool Stenographer::isValidExtension(string extensionIn){
+    //TODO:: restructure to test using CImg (http://stackoverflow.com/questions/18634962/cimg-how-to-test-that-a-file-is-image)
     if(extensionIn == "jpg" || 
        extensionIn == "bmp" ||
        extensionIn == "gif" ||
@@ -308,34 +309,32 @@ void Stenographer::sendDebugMsg(string message){
 //does the stenography
 
 /**
- * Does the stenography by:
- *
- * 1) pulling the data into an input queue
- *
- * 2) hide the stringToHide in the data, moving thr data from the input queue to the output queue
- *      - skip over the header, just move it over
+ * Steps:
  * 
- * 3) move the stuff to the new file
- *      - 
+ *      1) zero out least significant bit of each byte in img data
+ *      2) hide string (including null terminator), bit by bit, in image data, 1 bit/ byte of image data
+ *      3) randomize rest of the least significant digits, to be less suspicious.
+ * 
+ * help from https://gist.github.com/utaal/1557933
  */
 bool Stenographer::doStenography(){
     // make sure we are ready to go
     bool worked = ready();
     
-    
     if(worked){
-        ByteCImg image(getInputPath().c_str());
+        ByteCImg image(this->getInputPath().c_str());
         image &= 0xfe;
-        string tempStringToHide = getStringToHide() + (char)EOF;
-        
+        string tempStringToHide = getStringToHide();
+        //cout << "Size of string: " + sizeof(tempStringToHide.c_str()) << endl;
         ByteCImg::iterator it = image.begin();
         int i = 0;
         for (;;) {
-            if (i == tempStringToHide.length()) {
+            //+1 to length to ensure null terminator is placed.
+            if (i == tempStringToHide.length() + 1) {
                 break;
             }
-            char cur = tempStringToHide[i];
-            
+            char cur = tempStringToHide.c_str()[i];
+            //cout<< "cur: " + tempStringToHide[i] << endl;
             for (int b = 0; b < 8; ++b) {
                 if (it == image.end()) {
                     break;
@@ -345,18 +344,31 @@ bool Stenographer::doStenography(){
             }
             i++;
         }
-           
-        if (it == image.end()) {
-            cerr << "Cannot fit the entire input in the image" << endl;
-        }
         
-        image.save(getOutputPath().c_str());
+        if (it == image.end()) {
+            //cerr << "Cannot fit the entire input in the image" << endl;
+            worked = false;
+        }else{
+            //fill with random data, to hide the fact we hid a message
+            srand (time(NULL));
+            while(it != image.end()){
+                *it = *it | (rand() & 0x01);
+                ++it;
+            }
+        }
+        if(worked){
+            image.save(getOutputPath().c_str());
+        }
     }//if obj ready
     
     return worked;
 }//doStenography
 
 //gets the optional output file
+/**
+ * Pulls string data, bit by bit, from the image data. Stops on null terminator.
+ * help from https://gist.github.com/utaal/1557933
+ */
 string Stenographer::getHiddenMessage(){
     bool worked = ready();
     string outputStr = "";
@@ -369,21 +381,20 @@ string Stenographer::getHiddenMessage(){
       
         int bit = 0;
         char chr = 0;
+        int i = 0;
         for (ByteCImg::iterator it = image.begin(); it != image.end(); ++bit, ++it) {
             chr |= (*it & 0x01) << bit;
             if (bit == 7) {
+                if(chr == '\0'){
+                    break;
+                }
                 buffer[bufferpos++] = chr;
                 bit = -1;
                 chr = 0;
             }
+            i++;
         }
-        
-        //cout << "bufferpos b4: " << (int) bufferpos << endl << "EOF: " << EOF;
-        
-        for (; buffer[bufferpos] != EOF; --bufferpos);
-        
-        //cout << "bufferpos af: " << (int) bufferpos << endl;
-        
+        //move guffer into string
         for (int i = 0; i < bufferpos; ++i) {
             //cout << "\tBuffer: " << (int)buffer[i] << endl;
             outputStr += (int) buffer[i];
