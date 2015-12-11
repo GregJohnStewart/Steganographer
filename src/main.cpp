@@ -1,10 +1,10 @@
 /**
- * driver for the Stenographer object
+ * driver for the Steganographer object
  *
  */
 
 /* includes */
-#include "res/Stenographer.h"
+#include "res/Steganographer.h"
 #include <string>
 
 //usings
@@ -15,9 +15,9 @@ int main(){
     string inputFile = "test_orig2.bmp";
     string outputDir = "outputs";
     string strToHide = "hello there, world. aaaaaaaaaaabbbbbbbbbcccccccddddddddeeeeeeffffffffgggggggggggggggggghhhhhhhhiiiiiiigggggggggggjjjjjjjjjkkkkkkkklllllllmmmmmmmmnnnnnnnnnooooooooppppppppppppp!%##$^(&_+)(^$##@}{@#13";
-    Stenographer sten;
+    Steganographer sten;
     
-    sten = Stenographer();
+    sten = Steganographer();
     
     sten.setup(inputFile, outputDir, strToHide);
     
@@ -25,11 +25,11 @@ int main(){
 
     if(sten.ready()){
         cout << "object is ready" << endl;
-        bool worked = sten.doStenography();
+        bool worked = sten.doSteganography();
         if(worked){
-            cout << "stenography worked" << endl;
+            cout << "steganography worked" << endl;
         }else{
-            cout << "stenography failed" << endl;
+            cout << "steganography failed" << endl;
         }
         
         cout << "Hidden message from file: \"" << sten.getHiddenMessage() << "\"" << endl;
