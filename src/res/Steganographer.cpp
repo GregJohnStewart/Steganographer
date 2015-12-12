@@ -374,10 +374,7 @@ string Steganographer::getHiddenMessage(){
     
     if(worked){
         ByteCImg image(getOutputPath().c_str());
-    
-        char * buffer = (char*) malloc(sizeof(char) * image.size());
-        int bufferpos = 0;
-      
+        
         int bit = 0;
         char chr = 0;
         int i = 0;
@@ -387,179 +384,16 @@ string Steganographer::getHiddenMessage(){
                 if(chr == '\0'){
                     break;
                 }
-                buffer[bufferpos++] = chr;
+                outputStr += chr;
                 bit = -1;
                 chr = 0;
             }
             i++;
         }
-        //move guffer into string
-        for (int i = 0; i < bufferpos; ++i) {
-            //cout << "\tBuffer: " << (int)buffer[i] << endl;
-            outputStr += (int) buffer[i];
-        }
     }
-    
     if(worked){
         return outputStr;
     }else{
         return "";
     }
 }//getHiddenMessage()
-
-//function to get data from image
-bool Steganographer::getImageData(queue<unsigned char> *inputQ){
-    bool worked = true;
-    
-    fstream inputFileStream;
-    inputFileStream.open(origFilePath.c_str(), ios::in|ios::binary);
-    
-    if(!inputFileStream){
-        worked = false;
-    }else{
-        inputFileStream.seekg(0, ios::beg);
-        char tempByte;
-        while(!inputFileStream.eof()){
-            //inputQ->push(inputFileStream.read(tempByte, 1));
-            inputFileStream.read(&tempByte, sizeof tempByte);
-            inputQ->push(tempByte);
-            //sendDebugMsg("getting another bit of info");
-        }
-    }
-    inputFileStream.close();
-    
-    return worked;
-}//getImageData()
-
-//function to process the data in the que
-bool Steganographer::processImageData(queue<unsigned char> *inputQ, queue<unsigned char> *outputQ, unsigned short int headerSize){
-    sendDebugMsg("Begin processing image data");
-    bool worked = true;
-    unsigned char curByte;
-    //move header over
-    for(unsigned short int i = 1; i <= headerSize && !inputQ->empty(); i++){
-        outputQ->push(inputQ->front());
-        inputQ->pop();
-        //sendDebugMsg("moving a byte of the header");
-    }
-    
-    //process string
-    bool processWorked = true;
-    for(int i = 0;i < stringToHide.length() && !inputQ->empty();i++){
-        processWorked = putCharInImgData(inputQ, outputQ, stringToHide.at(i));
-        if(!processWorked){
-            throw SteganographerException("Failed processing image data. Failed putting char data into image data.");
-        }
-    }
-
-    //dump rest over
-    while(!inputQ->empty()){
-        curByte = inputQ->front();
-        inputQ->pop();
-        outputQ->push(curByte);
-    }
-    return worked;
-}//processImageData()
-
-//function to put the data into the new file
-bool Steganographer::putImageData(queue<unsigned char> *outputQ){
-    bool worked = true;
-    //determine new filename
-    string outputFilePath = getOutputPath();
-    sendDebugMsg("output file path: " + outputFilePath + "\n");    
-    //open new file @ outputFilePath
-    fstream outputFileStream;
-    outputFileStream.open(outputFilePath.c_str(), fstream::out|fstream::binary|fstream::trunc);
-    
-    if(!outputFileStream){
-        worked = false;
-    }else{
-        sendDebugMsg("setup output file");  
-        outputFileStream.seekg(0, ios::beg);
-        
-        sendDebugMsg("putting info into file: ");
-        
-        do{
-            outputFileStream.put(outputQ->front());
-            //sendDebugMsg("info");
-            outputQ->pop();
-            //sendDebugMsg("");
-        }while(!outputQ->empty());
-    }
-    outputFileStream.close();
-    
-    return worked;
-}//putImageData()
-
-//function to get the header size in number of bytes
-unsigned short int Steganographer::getHeaderSize(){
-    //based on: http://stackoverflow.com/questions/10423942/what-is-the-header-size-of-png-jpg-jpeg-bmp-gif-and-other-common-graphics-for
-    unsigned short int multiplier = 3;
-    sendDebugMsg("getHeaderSize() - extension: " + curExtension);
-    if(curExtension == "jpg"){
-        //TODO: do more to be more accurate. see source above
-        return 2 * multiplier;
-    }else if(curExtension == "bmp" || curExtension == "gif"){
-        return 14 * multiplier;
-    }else if(curExtension == "png"){
-        return 8 * multiplier;
-    }else{
-        throw SteganographerException("Failed determining image header file size. Invalid extension given.");
-    }
-}//get HeaderSize
-
-// gets a character from the image data
-char Steganographer::getCharDataFromImgData(queue<unsigned char> *inputQ){
-    unsigned char charBuilding = 0;
-    
-    return charBuilding;
-}// getCharDataFromImgData(queue<unsigned char>*)
-        
-// puts a character into the queue data
-bool Steganographer::putCharInImgData(queue<unsigned char> *inputQ, queue<unsigned char> *outputQ, unsigned char inputChar){
-    bool worked = true;
-    bool finished = false;
-    //cout<<"Current Char: " << inputChar << endl;
-    //cout<<"sizeof unsigned Char: " << sizeof(inputChar) << endl;
-    unsigned char curData;
-    unsigned short int tempBitLoc = 0;
-    bool tempBit = 0;
-    bool tempInBit = 0;
-    unsigned short int bitSize = sizeof(unsigned char) * 8;
-    //cout<<"bitSize: " << bitSize << endl;                 
-    for(int i = 0;(i < bitSize) && !inputQ->empty();i++){
-        //update temp bit to the one we are on
-        tempBitLoc = pow(2,i);
-
-        curData = inputQ->front();
-        inputQ->pop();
-        
-        //move data through
-        tempBit = inputChar & tempBitLoc;
-        tempInBit = curData & 1;
-        //cout<<tempBit<<endl;//debugging
-        
-        //cout<<"curData defore: "<< (int)curData;
-        
-        if(tempBit){
-            if(!tempInBit){ 
-                curData++;
-            }
-        }else{
-            if(tempInBit){
-                curData--;
-            }
-        }
-        //cout << " curData after: " << (int)curData << endl;
-        outputQ->push(curData);
-        
-        if(inputQ->empty()){
-            finished = true;
-        }
-    }    
-    if(finished){
-        worked = false;
-    }
-    
-    return worked;
-}// putCharInImgData(queue<unsigned char>*, unsigned char)

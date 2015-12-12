@@ -12,9 +12,9 @@ using std::string;
 using namespace std;
 
 int main(){
-    string inputFile = "test_orig2.bmp";
+    string inputFile = "input_images/Kruse, Gerald.bmp";
     string outputDir = "outputs";
-    string strToHide = "hello there, world. aaaaaaaaaaabbbbbbbbbcccccccddddddddeeeeeeffffffffgggggggggggggggggghhhhhhhhiiiiiiigggggggggggjjjjjjjjjkkkkkkkklllllllmmmmmmmmnnnnnnnnnooooooooppppppppppppp!%##$^(&_+)(^$##@}{@#13";
+    string strToHide = "Hello there, Dr. Kruse! This is a message hidden INSIDE an image. Pretty nifty. Here's some special characters: \\`~!@#$%^&*()[]{}|/<>,.:;\"'*-+\nAnother line!";
     Steganographer sten;
     
     sten = Steganographer();
